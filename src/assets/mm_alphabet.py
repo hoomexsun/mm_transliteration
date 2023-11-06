@@ -1,6 +1,12 @@
-from typing import Set
+from typing import Dict, Set
 
-MAPUM_MAYEK_CONSONANT: Set[str] = {
+MAPUM_VOWEL: Set[str] = {
+    "\uabce",  # \uabce -> ꯎ | UN
+    "\uabcf",  # \uabcf -> ꯏ | EE
+    "\uabd1",  # \uabd1 -> ꯑ | ATIYA
+}
+
+MAPUM_CONSONANT: Set[str] = {
     "\uabc0",  # \uabc0 -> ꯀ | KOK
     "\uabc1",  # \uabc1 -> ꯁ | SAM
     "\uabc2",  # \uabc2 -> ꯂ | LAI
@@ -27,13 +33,11 @@ MAPUM_MAYEK_CONSONANT: Set[str] = {
     "\uabda",  # \uabda -> ꯚ | BHAM
 }
 
-MAPUM_MAYEK_VOWEL: Set[str] = {
-    "\uabce",  # \uabce -> ꯎ | UN
-    "\uabcf",  # \uabcf -> ꯏ | EE
-    "\uabd1",  # \uabd1 -> ꯑ | ATIYA
+LONSUM_VOWEL: Set[str] = {
+    "\uabcf",  # \uabcf -> ꯢ | EE LONSUM
 }
 
-LONSUM_MAYEK_CONSONANT: Set[str] = {
+LONSUM_CONSONANT: Set[str] = {
     "\uabdb",  # \uabdb -> ꯛ | KOK LONSUM
     "\uabdc",  # \uabdc -> ꯜ | LAI LONSUM
     "\uabdd",  # \uabdd -> ꯝ | MIT LONSUM
@@ -43,15 +47,7 @@ LONSUM_MAYEK_CONSONANT: Set[str] = {
     "\uabe1",  # \uabe1 -> ꯡ | NGOU LONSUM
 }
 
-LONSUM_MAYEK_VOWEL: Set[str] = {
-    "\uabcf",  # \uabcf -> ꯢ | EE LONSUM
-}
-
-CHEITAP_MAYEK_CONSONANT: Set[str] = {
-    "\uabc9",  # \uabea -> ꯪ | NUNG
-}
-
-CHEITAP_MAYEK_VOWEL: Set[str] = {
+CHEITAP_VOWEL: Set[str] = {
     "\uabe3",  # \uabe3 -> ꯣ | ONAP
     "\uabe4",  # \uabe4 -> ꯤ | ENAP
     "\uabe5",  # \uabe5 -> ꯥ | AATAP
@@ -59,6 +55,10 @@ CHEITAP_MAYEK_VOWEL: Set[str] = {
     "\uabe7",  # \uabe7 -> ꯧ | SOUNAP
     "\uabe8",  # \uabe8 -> ꯨ | UNAP
     "\uabe9",  # \uabe9 -> ꯩ | CHEINAP
+}
+
+CHEITAP_CONSONANT: Set[str] = {
+    "\uabc9",  # \uabea -> ꯪ | NUNG
 }
 
 CHEISING_MAYEK: Set[str] = {
@@ -74,6 +74,33 @@ CHEISING_MAYEK: Set[str] = {
     "\uabf9",  # \uabf9 -> ꯹ | MAPAL
 }
 
-MAPUM_MAYEK: Set[str] = MAPUM_MAYEK_CONSONANT.union(MAPUM_MAYEK_VOWEL)
-LONSUM_MAYEK: Set[str] = LONSUM_MAYEK_CONSONANT.union(LONSUM_MAYEK_VOWEL)
-CHEITAP_MAYEK: Set[str] = CHEITAP_MAYEK_CONSONANT.union(CHEITAP_MAYEK_VOWEL)
+KHUDAM: Set[str] = {
+    "\uabeb",  # \uabeb -> ꯫
+    "\uabed",  # \uabed -> ꯭
+}
+
+
+MAPUM_MAYEK: Set[str] = MAPUM_CONSONANT.union(MAPUM_VOWEL)
+LONSUM_MAYEK: Set[str] = LONSUM_CONSONANT.union(LONSUM_VOWEL)
+CHEITAP_MAYEK: Set[str] = CHEITAP_CONSONANT.union(CHEITAP_VOWEL)
+
+
+EQUIVALENT_MAPUM: Dict[str, str] = {
+    "\uabdb": "\uabc0",  # \uabdb -> ꯛ : \uabc0 -> ꯀ
+    "\uabdc": "\uabc2",  # \uabdc -> ꯜ : \uabc2 -> ꯂ
+    "\uabdd": "\uabc3",  # \uabdd -> ꯝ : \uabc3 -> ꯃ
+    "\uabde": "\uabc4",  # \uabde -> ꯞ : \uabc4 -> ꯄ
+    "\uabdf": "\uabc5",  # \uabdf -> ꯟ : \uabc5 -> ꯅ
+    "\uabe0": "\uabc7",  # \uabe0 -> ꯠ : \uabc7 -> ꯇ
+    "\uabe1": "\uabc9",  # \uabe1 -> ꯡ : \uabc9 -> ꯉ
+}
+
+EQUIVALENT_LONSUM: Dict[str, str] = {
+    "\uabc0": "\uabdb",  # \uabc0 -> ꯀ : \uabdb -> ꯛ
+    "\uabc2": "\uabdc",  # \uabc2 -> ꯂ : \uabdc -> ꯜ
+    "\uabc3": "\uabdd",  # \uabc3 -> ꯃ : \uabdd -> ꯝ
+    "\uabc4": "\uabde",  # \uabc4 -> ꯄ : \uabde -> ꯞ
+    "\uabc5": "\uabdf",  # \uabc5 -> ꯅ : \uabdf -> ꯟ
+    "\uabc7": "\uabe0",  # \uabc7 -> ꯇ : \uabe0 -> ꯠ
+    "\uabc9": "\uabe1",  # \uabc9 -> ꯉ : \uabe1 -> ꯡ
+}
