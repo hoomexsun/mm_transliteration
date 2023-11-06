@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import List
 
-from src.utils.file import fget_list, fwrite_text
+from src.utils.file import read_list, write_text
 from src.assets.bn_alphabet import (
     BN_DEPENDENT_CONSONANT,
     BN_DEPENDENT_VOWEL,
@@ -47,10 +47,14 @@ def make_tokens(words: List[str]):
         char_markers[-1] = MARKER_BOUNDARY
 
         # Assign markers according to char or char_type
+        # Marker indices
+        # idx -> previous + current
+        # idx + 1 -> current + next
+        # idx - 1 -> previous of previous + current
         for idx, (char, char_type) in enumerate(zip(word, char_types)):
             if char_type == TYPE_VIRAMA:
-                char_markers[idx - 1] = MARKER_CONTINUOUS
-            if char_type == TYPE_DEPENDENT_VOWEL:
+                char_markers[idx] = MARKER_CONTINUOUS
+            elif char_type == TYPE_DEPENDENT_VOWEL:
                 char_markers[idx] = MARKER_CONTINUOUS
                 if idx + 2 < len(word) and char_types[idx + 2] == TYPE_DEPENDENT_VOWEL:
                     char_markers[idx + 1] = MARKER_BOUNDARY
@@ -91,9 +95,9 @@ def check_markers(markers: List[str]) -> bool:
 word1 = "অংগ্রেসশিংনা"
 words = [word1]
 
-words = fget_list(Path("data/words.txt"))
+words = read_list(Path("data/words.txt"))
 
 output_path = Path("data/tokens.txt")
 token_list = make_tokens(words)
 token_list = [f"{key}\t{value}" for key, value in token_list.items()]
-fwrite_text("\n".join(token_list), output_path)
+write_text("\n".join(token_list), output_path)
