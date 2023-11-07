@@ -81,6 +81,8 @@ def make_tokens(words: List[str]):
             elif char_type == TYPE_DEPENDENT_CONSONANT:
                 char_markers[idx] = MARKER_CONTINUOUS
                 char_markers[idx + 1] = MARKER_BOUNDARY
+            elif idx + 1 < len(word) and char_types[idx + 1] == TYPE_INDEPENDENT_VOWEL:
+                char_markers[idx + 1] = MARKER_BOUNDARY
 
         tokens[
             word
