@@ -6,7 +6,10 @@ from src.assets.bn_alphabet import (
     BN_DEPENDENT_CONSONANT,
     BN_DEPENDENT_VOWEL,
     BN_INDEPENDENT_VOWEL,
-    VIRAMA,
+    LETTER_RA,
+    LETTER_YA,
+    SIGN_VIRAMA,
+    BN_DEPENDENT_DIPHTHONGS,
 )
 
 TYPE_NULL = "x"
@@ -30,7 +33,7 @@ def make_tokens(words: List[str]):
 
         # Type Assignment
         for idx, char in enumerate(word):
-            if char == VIRAMA:
+            if char == SIGN_VIRAMA:
                 char_types[idx] = TYPE_VIRAMA
             elif char in BN_DEPENDENT_VOWEL:
                 char_types[idx] = TYPE_DEPENDENT_VOWEL
@@ -52,11 +55,26 @@ def make_tokens(words: List[str]):
         # idx + 1 -> current + next
         # idx - 1 -> previous of previous + current
         for idx, (char, char_type) in enumerate(zip(word, char_types)):
-            if char_type == TYPE_VIRAMA:
+            # Character based
+            if char == SIGN_VIRAMA:
                 char_markers[idx] = MARKER_CONTINUOUS
-            elif char_type == TYPE_DEPENDENT_VOWEL:
+                if idx == 1:
+                    char_markers[idx + 1] = MARKER_CONTINUOUS
+                if idx + 1 < len(word) and (
+                    word[idx + 1] == LETTER_RA or word[idx + 1] == LETTER_YA
+                ):
+                    char_markers[idx + 1] = MARKER_CONTINUOUS
+                if idx + 1 < len(word) and word[idx - 1] == word[idx + 1]:
+                    char_markers[idx + 1] = MARKER_BOUNDARY
+            elif idx + 1 < len(word) and word[idx : idx + 2] in BN_DEPENDENT_DIPHTHONGS:
+                char_markers[idx + 1] = MARKER_CONTINUOUS
+            # Type based
+            if char_type == TYPE_DEPENDENT_VOWEL:
                 char_markers[idx] = MARKER_CONTINUOUS
-                if idx + 2 < len(word) and char_types[idx + 2] == TYPE_DEPENDENT_VOWEL:
+                if idx + 2 < len(word) and (
+                    char_types[idx + 2] == TYPE_DEPENDENT_VOWEL
+                    or char_types[idx + 2] == TYPE_DEPENDENT_CONSONANT
+                ):
                     char_markers[idx + 1] = MARKER_BOUNDARY
                 if idx > 1 and char_types[idx - 2] != TYPE_VIRAMA:
                     char_markers[idx - 1] = MARKER_BOUNDARY
@@ -66,7 +84,7 @@ def make_tokens(words: List[str]):
 
         tokens[
             word
-        ] = f"{use_marker(word, char_markers)}\t{'-'.join(char_types)}\t{'-'.join(char_markers)}\t{check_markers(char_markers)}"
+        ] = f"{use_marker(word, char_markers)}\t{check_markers(char_markers)}\t{'/'.join(char_markers)}\t{'/'.join(char_types)}"
     # Step 2: Use BPE
 
     # Step 3: Build TU
