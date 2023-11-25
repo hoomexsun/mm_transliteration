@@ -88,10 +88,27 @@ options:
 ## 7. Algorithm 🚧
 
 The Break-Build-Morph algorithm
-
+Part 1: Syllabification
 $w = w_1w_2w_3 ... w_n$ ....................($n$ characters)
 $t = t_1t_2t_3 ... t_n$ ....................($n$ characters)
 $w = w_1w_2w_3 ... w_n$ ....................($n+1$ characters)
+
+Part 2: Conversion
+Algorithm
+Input: Syllabified bengali word
+Output: Transliterated meetei mayek word
+
+convert each character into the respective phonemes
+Improve the phoneme conversion by searching for diphthongs and treat it as single phoneme
+Split word into syllables using a boundary character
+For each syllable
+Find the nucleus
+Assign everything before nucleus as onset if it exist and after nucleus as coda
+If there is no onset, map nucleus using PHONEME_TO_MM_BEGIN and code using PHONEME_TO_MM_END
+Else, map onset using PHONEME_TO_MM_BEGIN, nucleus and coda using PHONEME_TO_MM_END
+Add apun, if there are multiple character in onset or coda between the characters
+Add apun, if nucleus ends with character other than MM_CHEITAPS and coda is not empty. [EXPERIMENTAL]
+Join onset, nucleus, coda and return
 
 ## See also
 

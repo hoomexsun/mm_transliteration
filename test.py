@@ -1,5 +1,6 @@
 from pathlib import Path
-from typing import List
+from tqdm import tqdm
+from typing import Dict, List
 
 from src.utils.file import read_list, write_text
 from src.assets.bn_alphabet import (
@@ -27,7 +28,7 @@ MARKER_CONTINUOUS = "C"
 def make_tokens(words: List[str]):
     tokens = {}
     # Step 1: Prepare Universal Truth
-    for word in words:
+    for word in tqdm(words, desc="Transliterating"):
         # Initialize character types
         char_types = [TYPE_NULL for _ in range(len(word))]
 
@@ -51,9 +52,10 @@ def make_tokens(words: List[str]):
 
         # Assign markers according to char or char_type
         # Marker indices
-        # idx -> previous + current
-        # idx + 1 -> current + next
-        # idx - 1 -> previous of previous + current
+        # idx -> previous + marker + current
+        # idx + 1 -> current + marker + next
+        # idx - 1 -> previous of previous + marker + previous
+        # Pass 1
         for idx, (char, char_type) in enumerate(zip(word, char_types)):
             # Character based
             if char == SIGN_VIRAMA:
@@ -84,13 +86,28 @@ def make_tokens(words: List[str]):
             elif idx + 1 < len(word) and char_types[idx + 1] == TYPE_INDEPENDENT_VOWEL:
                 char_markers[idx + 1] = MARKER_BOUNDARY
 
+        # Pass 2
+
+        # for idx, (char, char_type) in enumerate(zip(word, char_types)):
+        #     if char == SIGN_VIRAMA or idx == len(word) - 1:
+        #         if (
+        #             idx + 1 < len(word)
+        #             and idx > 1
+        #             and char_markers[idx + 1] == MARKER_BOUNDARY
+        #             and (
+        #                 char_types[idx - 1] == BN_DEPENDENT_CONSONANT
+        #                 or char_types[idx - 1] == BN_DEPENDENT_VOWEL
+        #             )
+        #             and char_markers[idx] == MARKER_NULL
+        #         ):
+        #             char_markers[idx - 1] = MARKER_CONTINUOUS
+
         tokens[
             word
         ] = f"{use_marker(word, char_markers)}\t{check_markers(char_markers)}\t{'/'.join(char_markers)}\t{'/'.join(char_types)}"
     # Step 2: Use BPE
 
     # Step 3: Build TU
-    print("Completed")
 
     return tokens
 
@@ -100,9 +117,9 @@ def use_marker(word: str, markers: List[str]) -> str:
     for idx, marker in enumerate(markers[1:]):
         char = word[idx]
         if marker == MARKER_BOUNDARY:
-            output += f"{char} / "
+            output += f"{char}/"
         elif marker == MARKER_NULL:
-            output += f"{char} ? "
+            output += f"{char}?"
         else:
             output += char
     return output
@@ -117,7 +134,13 @@ words = [word1]
 
 words = read_list(Path("data/words.txt"))
 
-output_path = Path("data/tokens.txt")
-token_list = make_tokens(words)
-token_list = [f"{key}\t{value}" for key, value in token_list.items()]
-write_text("\n".join(token_list), output_path)
+token_path = Path("data/tokens.txt")
+output_path = Path("data/output.txt")
+tokens: Dict[str, str] = make_tokens(words)
+
+
+token_list = [f"{word}\t{token}" for word, token in tokens.items()]
+write_text("\n".join(token_list), token_path)
+
+output_list = [f"{word}\t{token.split()[0]}" for word, token in tokens.items()]
+write_text("\n".join(output_list), output_path)

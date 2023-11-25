@@ -90,8 +90,13 @@ def write_csv(data: Dict, fieldnames: Tuple, dest: Path | str) -> None:
 
 
 def write_file(content: str, dest: Path | str, exist_ok: bool = True) -> None:
-    Path(dest).parent.mkdir(parents=True, exist_ok=exist_ok)
-    Path(dest).write_text(data=content, encoding="utf-8")
+    try:
+        Path(dest).parent.mkdir(parents=True, exist_ok=exist_ok)
+        Path(dest).write_text(data=content, encoding="utf-8")
+    except FileExistsError as e:
+        print(f"Error: {e}")
+    except IsADirectoryError as e:
+        print(f"Error: {e}")
 
 
 # Function to handle file name changes.
