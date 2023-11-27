@@ -61,9 +61,19 @@ PHONEME_SET_DIPHTHONGS: Set[str] = {
 
 PHONEME_VOWELS: Set[str] = PHONEME_SET_MONOPHTHONGS.union(PHONEME_SET_DIPHTHONGS)
 
-#! Arrange the LETTERacters according to SSP arranged using acoustic intensity (11->1)
-#! glide > rhotic > lateral > flap > trill > nasal > h > voiced fricative >
-#! voiced stop/affricate > voiceless fricative > voiceless stop/affricate
+# Phoneme To_Diphthong
+PHONEME_DIPHTHONGS_COMBINATION: Dict[str, str] = {
+    f"{PHONEME_A}{PHONEME_I}": PHONEME_AI,
+    f"{PHONEME_U}{PHONEME_I}": PHONEME_UI,
+    f"{PHONEME_O}{PHONEME_I}": PHONEME_OI,
+    f"{PHONEME_A}{PHONEME_U}": PHONEME_AU,
+    # Extra
+    f"{PHONEME_A}{PHONEME_O}": PHONEME_AU,
+    # With Semi-vowels
+    f"{PHONEME_A}{PHONEME_J}": PHONEME_AI,
+    f"{PHONEME_U}{PHONEME_J}": PHONEME_UI,
+    f"{PHONEME_O}{PHONEME_J}": PHONEME_OI,
+}
 
 # Sonority Sets for SSP
 SONORITY_SET_GLIDE: Set[str] = {
@@ -394,7 +404,7 @@ MM_LETTER_JHAM: str = "\uabd3"  # \uabd3 -> ꯓ
 MM_LETTER_RAI: str = "\uabd4"  # \uabd4 -> ꯔ
 MM_LETTER_BA: str = "\uabd5"  # \uabd5 -> ꯕ
 MM_LETTER_JIL: str = "\uabd6"  # \uabd6 -> ꯖ
-MM_LETTER_DIl: str = "\uabd7"  # \uabd7 -> ꯗ
+MM_LETTER_DIL: str = "\uabd7"  # \uabd7 -> ꯗ
 MM_LETTER_GHOU: str = "\uabd8"  # \uabd8 -> ꯘ
 MM_LETTER_DHOU: str = "\uabd9"  # \uabd9 -> ꯙ
 MM_LETTER_BHAM: str = "\uabda"  # \uabda -> ꯚ
@@ -416,6 +426,73 @@ MM_VOWEL_SOUNAP: str = "\uabe7"  # \uabe7 -> ꯧ
 MM_VOWEL_UNAP: str = "\uabe8"  # \uabe8 -> ꯨ
 MM_VOWEL_CHEINAP: str = "\uabe9"  # \uabe9 -> ꯩ
 MM_VOWEL_NUNG: str = "\uabea"  # \uabea -> ꯪ
+
+MM_MAPUM_CONSONANT: Set[str] = {
+    MM_LETTER_KOK,
+    MM_LETTER_SAM,
+    MM_LETTER_LAI,
+    MM_LETTER_MIT,
+    MM_LETTER_PA,
+    MM_LETTER_NA,
+    MM_LETTER_CHIL,
+    MM_LETTER_TIL,
+    MM_LETTER_KHOU,
+    MM_LETTER_NGOU,
+    MM_LETTER_THOU,
+    MM_LETTER_WAI,
+    MM_LETTER_YANG,
+    MM_LETTER_HUK,
+    MM_LETTER_PHAM,
+    MM_LETTER_GOK,
+    MM_LETTER_JHAM,
+    MM_LETTER_RAI,
+    MM_LETTER_BA,
+    MM_LETTER_JIL,
+    MM_LETTER_DIL,
+    MM_LETTER_GHOU,
+    MM_LETTER_DHOU,
+    MM_LETTER_BHAM,
+}
+
+MM_MAPUM_VOWEL: Set[str] = {
+    MM_LETTER_UN,
+    MM_LETTER_I,
+    MM_LETTER_ATIYA,
+}
+
+MM_MAPUM = MM_MAPUM_CONSONANT.union(MM_MAPUM_VOWEL)
+
+MM_LONSUM_CONSONANT: Set[str] = {
+    MM_LETTER_KOK_LONSUM,
+    MM_LETTER_LAI_LONSUM,
+    MM_LETTER_MIT_LONSUM,
+    MM_LETTER_PA_LONSUM,
+    MM_LETTER_NA_LONSUM,
+    MM_LETTER_TIL_LONSUM,
+    MM_LETTER_NGOU_LONSUM,
+}
+
+MM_LONSUM_VOWEL: Set[str] = {
+    MM_LETTER_I_LONSUM,
+}
+
+MM_LONSUM = MM_LONSUM_CONSONANT.union(MM_LONSUM_VOWEL)
+
+MM_CHEITAP_CONSONANT: Set[str] = {
+    MM_VOWEL_NUNG,
+}
+
+MM_CHEITAP_VOWEL: Set[str] = {
+    MM_VOWEL_ONAP,
+    MM_VOWEL_INAP,
+    MM_VOWEL_ANAP,
+    MM_VOWEL_YENAP,
+    MM_VOWEL_SOUNAP,
+    MM_VOWEL_UNAP,
+    MM_VOWEL_CHEINAP,
+}
+
+MM_CHEITAP = MM_CHEITAP_CONSONANT.union(MM_CHEITAP_VOWEL)
 # Khudam / Punctuations
 MM_CHEIKHEI: str = "\uabeb"  # \uabeb -> ꯫
 MM_LUM_IYEK: str = "\uabec"  # \uabec -> ꯬
@@ -506,7 +583,7 @@ PHONEME_TO_MM_BEGIN: Dict[str, str] = {
     PHONEME_ZH: MM_LETTER_JHAM,  # -> ꯓ
     PHONEME_T: MM_LETTER_TIL,  # -> ꯇ
     PHONEME_TH: MM_LETTER_THOU,  # -> ꯊ
-    PHONEME_D: MM_LETTER_DIl,  # -> ꯗ
+    PHONEME_D: MM_LETTER_DIL,  # -> ꯗ
     PHONEME_DH: MM_LETTER_DHOU,  # -> ꯙ
     PHONEME_N: MM_LETTER_NA,  # -> ꯅ
     PHONEME_P: MM_LETTER_PA,  # -> ꯄ
