@@ -88,10 +88,16 @@ options:
 ## 7. Algorithm 🚧
 
 The Break-Build-Morph algorithm
+
 Part 1: Syllabification
-$w = w_1w_2w_3 ... w_n$ ....................($n$ characters)
-$t = t_1t_2t_3 ... t_n$ ....................($n$ characters)
-$w = w_1w_2w_3 ... w_n$ ....................($n+1$ characters)
+
+$w = w_1w_2w_3 ... w_n$ .................... [Word] ($n$ characters)
+
+$t = t_1t_2t_3 ... t_n$ .................... [Character Types] ($n$ characters)
+
+$p = p_1p_2p_3 ... p_n$ .................... [Phonemes] ($n$ characters)
+
+$m = m_1m_2m_3 ... m_n+1$ .................... [Markers] ($n+1$ characters)
 
 Part 2: Conversion
 Algorithm
