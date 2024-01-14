@@ -1,9 +1,11 @@
 from src import MMTransliteration
 from src.utils.file import read_file, write_csv, write_json, write_text
 
-TEST_DATA_PATH = "data/words.txt"
-OUTPUT_PATH = "data/output.txt"
-WORDMAP_PATH = "data/wordmap"
+ROOT = "data_new"
+
+TEST_DATA_PATH = f"{ROOT}/words.txt"
+OUTPUT_PATH = f"{ROOT}/output.txt"
+WORDMAP_PATH = f"{ROOT}/wordmap"
 
 
 def main():

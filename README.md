@@ -87,19 +87,30 @@ options:
 
 ## 7. Algorithm 🚧
 
-The Break-Build-Morph algorithm
+**SyPhell** (Syllabify-Phonemize-Spell), a rule-based transliteration algorithm. ꯁꯤꯐꯦꯜ
 
-Part 1: Syllabification
+Part 1: Syllabify
 
-$w = w_1w_2w_3 ... w_n$ .................... [Word] ($n$ characters)
+$w = w_0w_1w_2 ... w_{n-1}$ is the word
+$m = m_0m_1m_2 ... m_n$ is the marker
+where $m_i$ shows the relationship between $w_{i-1}$ and $w_i$
+The marker denotes whether we should mark it as syllable boundary $(B)$ or as part of same syllable $(C)$. The marker is marked as $(x)$ if it is unidentified and $(e)$ if the two characters should not occur together in that order. It should be made sure not to include error in spelling as much as possible.
 
-$t = t_1t_2t_3 ... t_n$ .................... [Character Types] ($n$ characters)
+Step 1: Universal marker.
 
-$p = p_1p_2p_3 ... p_n$ .................... [Phonemes] ($n$ characters)
+$m_i = f_1(w_{i-1}, w_{i})$ where $i \in [n-1, 1]$
 
-$m = m_1m_2m_3 ... m_n+1$ .................... [Markers] ($n+1$ characters)
+Step 2: Contextual marker
 
-Part 2: Conversion
+Step 2.1: CV
+Step 2.2: Consonant Clusters
+Step 2.3: CC
+
+Step 3: Brute force marker
+
+Part 2: Phonemize
+
+Part 3: Spell
 Algorithm
 Input: Syllabified bengali word
 Output: Transliterated meetei mayek word
