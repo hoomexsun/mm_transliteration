@@ -1,0 +1,4 @@
+WMR=100.0
+CER=99.93410933234289
+Accuracy(word)=0.000000
+Accuracy(character)=0.065891

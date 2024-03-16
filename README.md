@@ -1,137 +1,93 @@
 # mm_transliteration 🚧
 
-Break Build Morph Algorithm for Transliteration of Manipuri Bangla Script to Meetei/Meitei Mayek
+**SyPhell Algorithm** for transliteration of Manipuri Bengali Script to Meetei/Meitei Mayek.
+
+## Status
 
 🚧 This repository is currently under development!
 
-## 1. Testing
+## Quickstart
 
-Run `main.py` and check `data/`
+1. Clone this repository.
 
-## 2. Testing with custom input
+   ```sh
+   git clone https://github.com/hoomexsun/mm_transliteration.git
+   ```
 
-1. Put file containing the bengali words in data directory
-2. Run `main.py`
+2. Install python requirements. Please refer [requirements.txt](requirements.txt)
+3. Now, run `main.py`.
 
-Intermediate output in `data/tokens.txt`
+## Custom Usage
 
-## 3. Use as Module
+After Step 1 & 2 from Quickstart.
 
-Clone `src` folder in your `main_project/src` and rename it to your choice, say `mm_transliteration`.
+1. Add your file.
+2. Extract the string from the file and call either `mt.transliterate()` or `mt.transliterate_words()`.
 
-Then, Import and create `MMTransliteration` class from `mm_transliteration` and call `transliterate()` , `transliterate_script()` or `transliterate_utterances()`
+   ```python
+   # main.py
+   from pathlib import Path
+   from src.mt_ import MMTransliteration
 
-```python
-# From a python file inside main_project/src
-from mm_transliteration import MMTransliteration
+   content = Path("<YOUR_FILE_PATH>").read_text(encoding="utf-8")
+   gc = MMTransliteration()
 
-mt = MMTransliteration()
+   output_1 = mt.transliterate_words(content) # For huge text
+   # or
+   output_2 = mt.transliterate(content) # Simpler
+   ```
 
-# 1. Transliterate bengali string
-output_1 = mt.transliterate("<your-input-here>")
+3. Now, run `main.py`.
 
-# 2. Transliterate bengali script
-output_2 = mt.transliterate_script("<your-file-here>")
+## Use in your repository (as submodule)
 
-# 3. Transliterate bengali utterances
-output_3 = mt.transliterate_utterances("<your-utterance-file-here>")
-```
+1. Add this repository as submodule
 
-## 4. Generating wordmap 🚧
+   ```bash
+   git submodule add https://github.com/hoomexsun/mm_transliteration.git
+   ```
 
-You can generate wordmap of your word list as follows
+2. Create a `MMTransliteration` object after importing and then use its functions.
 
-1. Put your `words.txt` inside `data`.
-2. From `main.py`, write a function referring to `generate_wordmap` function and `main` function.
-3. Run it.
+   ```python
+   from mm_transliteration import MMTransliteration
+   gc = MMTransliteration()
+   ...
+   ```
 
-Writing Wordmap file in text format, json format and csv format are all included as utility functions.
+## Evaluation (WER & CER)
 
-Refer `src/utils/file.py`
+🚧 Currently under development!
 
-## 5. Correcting files in bulk 🚧
+## GUI
 
-Put all files inside a directory say `data/inputs/` and write as
+Check out gui built using tkinter on [XLIT](https://github.com/hoomexsun/xlit).
 
-```python
-# From a python file inside main_project/src
-from mm_transliteration import MMTransliteration
-from src.utils.dir import process_directory
+## Algorithm 2 (Syllabification)
 
-input_dir = "data/inputs"
-mt = MMTransliteration()
+🚧 Currently under development!
 
-# For normal files
-process_directory(gc.transliterate_script, dir=input_dir)
+## Algorithm 3 (Spell)
 
-# For utterance files
-process_directory(gc.transliterate_utterances, dir=input_dir)
-```
+**Input:** List of phonemes, P or {p₀, p₁, …, pₙ₋₁}
+**Output:** Meetei Mayek String, **S**
 
-Output files will be inside `data/outputs`
-
-## 6. Script mode 🚧
-
-usage: script.py [-h] [-f | -d] input_string
-
-Transliterates Bengali Unicode to Meetei Mayek Unicode using a rule-based method, supporting transliteration through a wordmap
-
-positional arguments:
-input_string Input string to transliterate
-
-options:
-
-1. -h, --help show this help message and exit
-2. -f, --file Input is a file name
-3. -d, --dir Input is a directory
-
-## 7. Algorithm 🚧
-
-**SyPhell** (Syllabify-Phonemize-Spell), a rule-based transliteration algorithm. ꯁꯤꯐꯦꯜ
-
-Part 1: Syllabify
-
-$w = w_0w_1w_2 ... w_{n-1}$ is the word
-$m = m_0m_1m_2 ... m_n$ is the marker
-where $m_i$ shows the relationship between $w_{i-1}$ and $w_i$
-The marker denotes whether we should mark it as syllable boundary $(B)$ or as part of same syllable $(C)$. The marker is marked as $(x)$ if it is unidentified and $(e)$ if the two characters should not occur together in that order. It should be made sure not to include error in spelling as much as possible.
-
-Step 1: Universal marker.
-
-$m_i = f_1(w_{i-1}, w_{i})$ where $i \in [n-1, 1]$
-
-Step 2: Contextual marker
-
-Step 2.1: CV
-Step 2.2: Consonant Clusters
-Step 2.3: CC
-
-Step 3: Brute force marker
-
-Part 2: Phonemize
-
-Part 3: Spell
-Algorithm
-Input: Syllabified bengali word
-Output: Transliterated meetei mayek word
-
-convert each character into the respective phonemes
-Improve the phoneme conversion by searching for diphthongs and treat it as single phoneme
-Split word into syllables using a boundary character
-For each syllable
-Find the nucleus
-Assign everything before nucleus as onset if it exist and after nucleus as coda
-If there is no onset, map nucleus using PHONEME_TO_MM_BEGIN and code using PHONEME_TO_MM_END
-Else, map onset using PHONEME_TO_MM_BEGIN, nucleus and coda using PHONEME_TO_MM_END
-Add apun, if there are multiple character in onset or coda between the characters
-Add apun, if nucleus ends with character other than MM_CHEITAPS and coda is not empty. [EXPERIMENTAL]
-Join onset, nucleus, coda and return
+1. initialize **S** ← mm_begin[p₀]
+2. assign flag ← True if p₀ is vowel else False
+3. for each phoneme pᵢ from i ← 1 to n-1:
+   - if pᵢ₋₁ and pᵢ are both consonants:
+     append mm_char_apun to **S**
+   - if flag is True:
+     append mm_end[pᵢ] to **S**
+   - else if pᵢ is consonant:
+     append mm_begin[pᵢ] to **S**
+   - else:
+     flag ← True
+4. Return the resulting string **S**
 
 ## See also
 
-- [Speech Dataset](https://github.com/hoomexsun/speech_dataset).
+- [Glyph Correction](https://github.com/hoomexsun/glyph_correction).
 - [Meetei/Meitei Mayek Transliteration](https://github.com/hoomexsun/mm_transliteration).
 - [Meetei/Meitei Mayek Keyboard for Windows](https://github.com/hoomexsun/mm_keyboard).
-- [IPA Keyboard for Windows](https://github.com/hoomexsun/ipa_keyboard).
-- [S-550 Glyph Correction](https://github.com/hoomexsun/s550_glyph_correction).
-- [Epaomayek Glyph Correction](https://github.com/hoomexsun/epaomayek_glyph_correction).
+- [Wahei Tool](https://https://github.com/hoomexsun/wahei).

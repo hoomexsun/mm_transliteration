@@ -62,9 +62,9 @@ def make_tokens(words: List[str]):
         num_unidentified = char_markers.count(MARKER_UNIDENTIFIED)
         total_num_unidentified += num_unidentified
         total_num_markers += len(char_markers)
-        tokens[
-            word
-        ] = f"{use_markers(word, char_markers)}\t{mix_markers(word, char_markers)}\t{check_markers(char_markers)}\t{num_unidentified}/{len(char_markers)}"
+        tokens[word] = (
+            f"{use_markers(word, char_markers)}\t{mix_markers(word, char_markers)}\t{check_markers(char_markers)}\t{num_unidentified}/{len(char_markers)}"
+        )
         if check_markers(char_markers):
             num_completed += 1
         if MARKER_ERROR in char_markers:
