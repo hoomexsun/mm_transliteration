@@ -1,2 +1,3 @@
 tqdm
-enchant
+enchant # for evaluation
+matplotlib # for view_ssp

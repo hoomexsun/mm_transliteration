@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Dict, List, Set, Tuple
 
 from tqdm import tqdm
@@ -8,7 +9,17 @@ from ..lon_ import Bengali
 __all__ = ["MMTransliteration"]
 
 
+class Marker(Enum):
+    NULL = "x"
+    CONTINUOUS = "C"
+    BOUNDARY = "B"
+    ERROR = "e"
+
+
 class MMTransliteration:
+
+    def __init__(self, delimiter: str = "/") -> None:
+        self.delimiter = delimiter
 
     def transliterate_words(self, text: str) -> str:
         bn = Bengali()
@@ -26,23 +37,23 @@ class MMTransliteration:
         self.virama = bn.sign_virama
 
         # Step 0: Adjusting s550 characters
-        text = self.__adjust_glyph(text, charmap=e2b.premap)
-
-        # Step 1: Mapping Bengali Alphabet
-        text = self.__map_unicode(text, charmap=e2b.charmap)
-
-        # Step 2: Fix suffix position of r and then mapping
-        text = self.__fix_r_glyph(
-            text, chars=e2b.s550_extra_chars, charmap=e2b.R_char_r
-        )
-
-        # Step 3: Fix prefix position of vowels and fix vowels
-        text = self.__fix_vowels(
-            text, chars=bn.L_vowels, enclosed_vowel_charmap=e2b.postmap_vowels
-        )
+        char_markers = self.__gen_markers(text)
 
         # Returns final content
         return text
+
+    def __gen_markers(self, text) -> str:
+        """Generate Universal Markers. Based on each consecutive charactres
+
+        Args:
+            word (str): input word
+        """
+        char_markers = [Marker.NULL] * (len(text) + 1)
+        char_markers[-1] = Marker.BOUNDARY
+        for idx in range(len(text) - 1, 0, -1):
+            char_markers[idx] = self.mark_two_chars(text[idx - 1], text[idx])
+        char_markers[0] = Marker.BOUNDARY
+        return char_markers
 
     # Private methods
     def __adjust_glyph(self, text: str, charmap: Dict[str, str]) -> str:

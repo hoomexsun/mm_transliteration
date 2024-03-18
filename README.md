@@ -30,7 +30,7 @@ After Step 1 & 2 from Quickstart.
    from src.mt_ import MMTransliteration
 
    content = Path("<YOUR_FILE_PATH>").read_text(encoding="utf-8")
-   gc = MMTransliteration()
+   mt = MMTransliteration()
 
    output_1 = mt.transliterate_words(content) # For huge text
    # or
@@ -51,7 +51,7 @@ After Step 1 & 2 from Quickstart.
 
    ```python
    from mm_transliteration import MMTransliteration
-   gc = MMTransliteration()
+   mt = MMTransliteration()
    ...
    ```
 
