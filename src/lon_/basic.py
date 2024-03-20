@@ -715,3 +715,9 @@ class Bengali(Alphabet):
 
         # Vowel written as enclosed
         self.E_vowels: Set[str] = {self.vowel_o, self.vowel_au}
+
+        # Dependent Diphthongs
+        self.independent_diphthongs_set: Set[str] = set()
+
+        # Independent Diphthongs
+        self.dependent_diphthongs_set: Set[str] = set()

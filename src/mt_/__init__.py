@@ -1,12 +1,12 @@
 from enum import Enum
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List
 
 from tqdm import tqdm
 
-from .e2b import E2B
-from ..lon_ import Bengali
+from .b2m import B2P, P2M, Tag, Delimiter
+from ..lon_ import Bengali, MMPhoneme
 
-__all__ = ["MMTransliteration"]
+__all__ = ["MMTransliteration", "B2P", "P2M", "Tag", "Delimiter", "make_tokens"]
 
 
 class Marker(Enum):
@@ -23,16 +23,16 @@ class MMTransliteration:
 
     def transliterate_words(self, text: str) -> str:
         bn = Bengali()
-        e2b = E2B()
+        b2p = B2P()
         words = []
-        for word in tqdm(text.split(), desc="Correcting Glyphs..."):
-            words.append(self.transliterate(text=word, bn=bn, e2b=e2b))
+        for word in tqdm(text.split(), desc="Transliterating..."):
+            words.append(self.transliterate(text=word, bn=bn, e2b=b2p))
         return "\n".join(words)
 
-    def transliterate(self, text: str, bn: Bengali | None, e2b: E2B | None) -> str:
-        if bn == None or e2b == None:
+    def transliterate(self, text: str, bn: Bengali | None, b2P: B2P | None) -> str:
+        if bn == None or b2p == None:
             bn = Bengali()
-            e2b = E2B()
+            b2p = B2P()
 
         self.virama = bn.sign_virama
 
@@ -72,66 +72,209 @@ class MMTransliteration:
             text = text.replace(self.virama * num, self.virama)
         return text
 
-    def __fix_r_glyph(self, text: str, chars: Set[str], charmap: Dict[str, str]) -> str:
-        # 0. Remove extra chars
-        for char in chars:
-            text = text.replace(char, "")
-        # 1. Fixing position of r glyph
-        char_list = []
-        for idx, char in enumerate(text):
-            if char in charmap:
-                start_idx = (
-                    idx - 7
-                    if idx > 6
-                    else (idx - 5 if idx > 4 else (idx - 3 if idx > 2 else idx - 1))
-                )
-                substring, offset = self.__jump(text[start_idx : idx + 1][::-1])
-                char_list = char_list[: idx - offset] + substring[::-1]
-            else:
-                char_list.append(char)
-        # 2. Post mapping r
-        text = "".join(char_list)
-        for char, replacement in charmap.items():
-            text = text.replace(char, replacement)
 
-        # 3. Fix redundant virama
-        num_mistypes: int = 2
-        for num in range(num_mistypes + 1, 1, -1):
-            text = text.replace(self.virama * num, self.virama)
-        return text
+#! OLD Which should work
 
-    def __fix_vowels(
-        self, text: str, chars: Set[str], enclosed_vowel_charmap: Dict[str, str]
-    ) -> str:
-        # 1. Fixing Left Vowels' position
-        char_list = []
-        skip_index = -1
-        for idx, char in enumerate(text):
-            if idx == skip_index:
-                skip_index = -1
-            elif char in chars:
-                stop_idx = (
-                    idx + 8
-                    if idx <= len(text) - 7
-                    else (idx + 6 if idx <= len(text) - 5 else idx + 4)
-                )
-                substring, offset = self.__jump(text[idx:stop_idx])
-                char_list += substring
-                skip_index = idx + offset
-            elif idx > skip_index:
-                char_list.append(char)
 
-        text = "".join(char_list)
-        # 2. Fixing enclosed vowels to correct unicode
-        for char, replacement in enclosed_vowel_charmap.items():
-            text = text.replace(char, replacement)
-        return text
+# Step 1: Syllabify the bengali text
+def syllabify(word: str) -> str:
+    pass
 
-    def __jump(self, chars: str) -> Tuple[List[str], int]:
-        char, *right = chars
-        idx = 0
-        while idx < len(right) - 1 and right[idx + 1] == self.virama:
-            idx += 2
-        if idx >= len(right):
-            return list(chars), 1
-        return (right[: idx + 1] + [char], idx + 1)
+
+# Step 2: Convert into phoneme
+def phonemize(word: str, syllable_delimiter: str = "/") -> str:
+    pass
+
+
+# Step 3: Build Meetei Mayek words
+def spell(word: str, syllable_delimiter: str = "/") -> str:
+    pass
+
+
+# Process all words in a list
+def make_tokens(words: List[str]):
+    tokens = {}
+    num_completed = 0
+    total_num_unidentified = 0
+    total_num_markers = 0
+
+    for idx, word in enumerate(words):
+        # Pass 1: Generate marker based on two consecutive chars
+        char_markers = generate_universal_tag(word)
+
+        # Pass 2: Generate marker based on context
+        char_markers = generate_contextual_tag(word, char_markers)
+
+        num_unidentified = char_markers.count(Tag.NULL)
+        total_num_unidentified += num_unidentified
+        total_num_markers += len(char_markers)
+        tokens[word] = (
+            f"{use_markers(word, char_markers)}\t{mix_markers(word, char_markers)}\t{check_markers(char_markers)}\t{num_unidentified}/{len(char_markers)}"
+        )
+        if check_markers(char_markers):
+            num_completed += 1
+
+    print(f"{num_completed}/{len(words)} | {num_completed/len(words):.2f}% (Completed)")
+    print(
+        f"{total_num_unidentified}/{total_num_markers} | {total_num_unidentified/total_num_markers:.2f}% (Marker Error)"
+    )
+    return tokens
+
+
+# Pass 1: Generate tag based on two consecutive chars
+def generate_universal_tag(word: str) -> str:
+    bn = Bengali()
+
+    char_markers = [Tag.NULL] * (len(word) + 1)
+    char_markers[-1] = Tag.BOUNDARY
+
+    for idx in range(len(word) - 1, 0, -1):
+        char_markers[idx] = mark_two_chars(word[idx - 1], word[idx], bn=bn)
+
+    char_markers[0] = Tag.BOUNDARY
+    return char_markers
+
+
+# Pass 2: Generate tag based on context
+def generate_contextual_tag(word: str, char_markers: List[str]) -> List[str]:
+    bn = Bengali()
+    mmP = MMPhoneme()
+    b2p = B2P()
+    word_len = len(word)
+    # 2.1. (V, C, )
+    ptr1 = word_len - 1
+    while ptr1 != 0:
+        if char_markers[ptr1] == Tag.NULL:
+            char2 = word[ptr1]
+            char1 = word[ptr1 - 1]
+            # print(
+            #     f"{char1=} | {char2=} | {word[ptr1]=} | {char_markers[ptr1]=} | {word[ptr1+1]=} | {char_markers[ptr1 + 1]=}"
+            # )
+            if (
+                ptr1 > 0
+                and char_markers[ptr1 + 1] == Tag.CONTINUOUS
+                and word[ptr1 + 1] != bn.sign_virama
+                and char2 in bn.independent_consonant_set
+                and char1 != bn.sign_virama
+            ):
+                char_markers[ptr1] = Tag.BOUNDARY
+        # Go to previous
+        ptr1 -= 1
+
+    # print(f"2.1. {char_markers=}")
+
+    # 2.2: After virama
+    ptr1 = word_len - 1
+    while ptr1 != 0:
+        if char_markers[ptr1] == Tag.NULL and word[ptr1 - 1] == bn.sign_virama:
+            char2, phoneme2 = word[ptr1], b2p.charmap.get(word[ptr1], "")
+            char1, phoneme1 = word[ptr1 - 2], b2p.charmap.get(word[ptr1 - 2], "")
+
+            # print(f"{char1=} | {phoneme1=} | {char2=} | {phoneme2=}")
+            # 2.2.1. Gemination
+            if phoneme1 == phoneme2:
+                char_markers[ptr1] = Tag.BOUNDARY
+            # 2.2.2. Plosive
+            elif (
+                mmP.get_seivers(phoneme1)[0] == 1 and mmP.get_seivers(phoneme2)[0] == 1
+            ):
+                char_markers[ptr1] = Tag.BOUNDARY
+            # 2.2.3. Fricative
+            elif mmP.get_seivers(phoneme1)[0] == 3 or mmP.get_seivers(phoneme2)[0] == 3:
+                char_markers[ptr1] = Tag.CONTINUOUS
+            # 2.2.4. Approximant (Glide in Sievers)
+            elif mmP.get_seivers(phoneme2)[0] == 4:
+                char_markers[ptr1] = Tag.CONTINUOUS
+
+            # 2.2.3. Lateral Approximant
+            # elif phoneme1 in SIEVERS_PLOSIVE and phoneme2 in SIEVERS_PLOSIVE:
+            #     char_markers[ptr1] = Tag.BOUNDARY
+            # # 2.2.3. Rhotic
+            # elif phoneme1 in SIEVERS_PLOSIVE and phoneme2 in SIEVERS_PLOSIVE:
+            #     char_markers[ptr1] = Tag.BOUNDARY
+            # # 2.2.3. Nasal
+            # elif phoneme1 in SIEVERS_PLOSIVE and phoneme2 in SIEVERS_PLOSIVE:
+            #     char_markers[ptr1] = Tag.BOUNDARY
+            # else:
+            #     char_markers[ptr1] = Tag.BOUNDARY
+
+        # Go to previous
+        ptr1 -= 1
+
+    # print(f"2.2. {char_markers=}")
+
+    # 2.3 CC
+    ptr1 = word_len - 1
+    # while ptr1 != 0:
+    #     if char_markers[ptr1] == Tag.NULL:
+    #     ptr1 -= 1
+
+    return char_markers
+
+
+# Universal character type based relations
+def mark_two_chars(char1: str, char2: str, bn: Bengali) -> str:
+    if char2 == bn.sign_virama:
+        return Tag.CONTINUOUS if char1 in bn.independent_consonant_set else Tag.ERROR
+    elif char2 in bn.dependent_vowel_set:
+        if (
+            char1 in bn.independent_consonant_set
+            or f"{char1}{char2}" in bn.dependent_diphthongs_set
+        ):
+            return Tag.CONTINUOUS
+        else:
+            return Tag.ERROR
+    elif char2 in bn.dependent_consonant_set:
+        if char1 in bn.independent_consonant_set.union(
+            bn.independent_vowel_set, bn.dependent_vowel_set
+        ):
+            return Tag.CONTINUOUS
+        else:
+            return Tag.ERROR
+    elif char2 in bn.independent_vowel_set:
+        if char1 in bn.independent_consonant_set.union(
+            bn.independent_vowel_set, bn.independent_consonant_set
+        ):
+            return Tag.BOUNDARY
+        elif f"{char1}{char2}" in bn.dependent_diphthongs_set:
+            return Tag.CONTINUOUS
+        elif char1 in bn.dependent_vowel_set:
+            return Tag.BOUNDARY
+        else:
+            return Tag.ERROR
+    elif char2 in bn.independent_consonant_set:
+        return Tag.BOUNDARY if char1 in bn.dependent_consonant_set else Tag.NULL
+    else:
+        return Tag.NULL
+
+
+# Utility functions
+# 1. For representation
+def use_markers(word: str, markers: List[str]) -> str:
+    output = ""
+    for idx, marker in enumerate(markers[1:]):
+        char = word[idx]
+        if marker == Tag.BOUNDARY:
+            output += f"{char}/"
+        elif marker == Tag.NULL:
+            output += f"{char}?"
+        elif marker == Tag.ERROR:
+            output += f"{char}*"
+        else:
+            output += char
+    return output
+
+
+# 2. For detailed representation
+def mix_markers(word, char_markers):
+    output = ""
+    for idx in range(len(word)):
+        output += char_markers[idx]
+        output += f"-{word[idx]}-"
+    output += char_markers[len(word)]
+    return output
+
+
+# 3. For checking whether syllabification is complete
+def check_markers(markers: List[str]) -> bool:
+    return False if Tag.NULL in markers else True

@@ -1,3 +1,4 @@
 tqdm
 enchant # for evaluation
 matplotlib # for view_ssp
+numpy # for ssp

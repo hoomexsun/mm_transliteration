@@ -2,10 +2,16 @@ import csv
 import json
 import os
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List, Set, Tuple
 
 import enchant
+import numpy as np
 from matplotlib import pyplot as plt
+from tqdm import tqdm
+
+from lon_.basic import Bengali, MMPhoneme
+from mt_.b2m import B2P, Delimiter
+from src.mt_ import Tag
 
 
 def create_wordmap(content: str, output: str, wordmap_path: str | Path):
@@ -89,7 +95,135 @@ def evaluate(target_dict: Dict[str, str], output_dict: Dict[str, str]):
     Path("data/outputs.txt").write_text("\n".join(outputs), encoding="utf-8")
 
 
+def plot_ssp(words_in_phonemes: List[str]) -> None:
+    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+    mmP = MMPhoneme()
+    for i, phonemes in enumerate(words_in_phonemes):
+        row = i // 2
+        col = i % 2
+
+        sonority_values = [
+            mmP.get_seivers(
+                phoneme,
+            )[0]
+            for phoneme in phonemes
+        ]
+        y = np.array(sonority_values)
+
+        phoneme_labels = [f"{idx}/{phoneme}" for idx, phoneme in enumerate(phonemes)]
+
+        axes[row, col].plot(phoneme_labels, y, marker="*", label=phonemes)
+
+    plt.tight_layout()
+    plt.show()
+
+
+def compare_syllable():
+    syllable_path = "data/syllables.txt"
+    output_path = "data/output.txt"
+    syllables: List[str] = [
+        str(syllable_pair.split()[1:])
+        for syllable_pair in Path(syllable_path).read_text(encoding="utf-8").split("\n")
+    ]
+    outputs: List[str] = [
+        str(output_pair.split()[1:])
+        for output_pair in Path(output_path).read_text(encoding="utf-8").split("\n")
+    ]
+
+    num_total = len(syllables)
+    num_left = 0
+    num_done_manual = 0
+    num_done_algo = 0
+
+    for syllable, output in zip(syllables, outputs):
+        if output.find("?") == -1:
+            num_done_algo += 1
+        elif syllable.find("?") == -1:
+            num_done_manual += 1
+        else:
+            num_left += 1
+
+    print(
+        f"Number of words syllabified: {num_done_algo + num_done_manual}/{num_total} | Percentage: {100 * (num_done_algo + num_done_manual) / num_total:.02f}%\n"
+        f"---Algorithm: {num_done_algo}/{num_total} | Percentage: {100 * num_done_algo / num_total:.02f}%\n"
+        f"---Manual: {num_done_manual}/{num_total} | Percentage: {100 * num_done_manual / num_total:.02f}%\n"
+        f"Number of words unsyllabified: {num_left}/{num_total} | Percentage: {100 * num_left / num_total:.02f}%"
+    )
+
+
 #! OLD
+def syllabify(word: str) -> str:
+
+    bn = Bengali()
+    mmP = MMPhoneme()
+    b2p = B2P()
+
+    to_phoneme: Dict[str, str] = b2p.charmap
+
+    # 0. Init
+    # 0.2. Phonemes
+    phonemes = [to_phoneme.get(char, "") for char in word]
+    # 0.3. Character markers
+    char_markers = [Tag.NULL for _ in range(len(word) + 1)]
+    char_markers[0], char_markers[-1] = Tag.BOUNDARY, Tag.BOUNDARY
+
+    # 2. Assign character markers
+    for idx, (char, phoneme) in enumerate(zip(word, phonemes)):
+        # 2.1. Character based
+        if char == bn.sign_virama:
+            char_markers[idx] = Tag.CONTINUOUS
+            if idx == 1:
+                char_markers[idx + 1] = Tag.CONTINUOUS
+
+            if idx + 1 < len(word) and word[idx - 1] == word[idx + 1]:
+                char_markers[idx + 1] = Tag.BOUNDARY
+        elif (
+            idx + 1 < len(word)
+            and str(word[idx : idx + 2]) in bn.dependent_diphthongs_set
+        ):
+            char_markers[idx + 1] = Tag.CONTINUOUS
+
+        # 2.2. Phoneme based
+        if char == bn.sign_virama and idx + 1 < len(phonemes):
+            if phonemes[idx + 1] == mmP.phoneme_r or phonemes[idx + 1] == mmP.phoneme_j:
+                char_markers[idx + 1] = Tag.CONTINUOUS
+            elif (
+                mmP.get_seivers(phoneme)[0] == 1
+                and mmP.get_seivers(phonemes[idx + 1])[0] == 1
+            ):
+                char_markers[idx + 1] = Tag.BOUNDARY
+
+        # 2.3. Type based
+        if char in bn.dependent_vowel_set:
+            char_markers[idx] = Tag.CONTINUOUS
+            if idx + 2 < len(word) and (
+                word[idx + 2] in bn.dependent_vowel_set
+                or word[idx + 2] in bn.dependent_consonant_set
+            ):
+                char_markers[idx + 1] = Tag.BOUNDARY
+            if idx > 1 and word[idx - 2] == bn.sign_virama:
+                char_markers[idx - 1] = Tag.BOUNDARY
+        elif char in bn.dependent_consonant_set:
+            char_markers[idx] = Tag.CONTINUOUS
+            char_markers[idx + 1] = Tag.BOUNDARY
+        elif idx + 1 < len(word) and word[idx + 1] in bn.independent_vowel_set:
+            char_markers[idx + 1] = Tag.BOUNDARY
+
+    return as_str(word, char_markers)
+
+
+# Utility functions
+def as_str(word: str, markers: List[str]) -> str:
+    output = ""
+    for idx, marker in enumerate(markers[1:]):
+        char = word[idx]
+        if marker == Tag.BOUNDARY:
+            output += f"{char}{Delimiter.SYLLABLE}"
+        elif marker == Tag.NULL:
+            output += f"{char}{Delimiter.UNCLEAR}"
+        else:
+            output += char
+    return output
 
 
 # f(syllable) = (onset, nucleus, coda)
@@ -216,23 +350,3 @@ def syllabified_word_to_phoneme(word: str, syllable_delimiter: str = "/") -> Lis
         onset, nucleus, coda = split_syllable_phonemes(syllable)
         phonemes = phonemes + onset + nucleus + coda
     return list(filter(None, phonemes))
-
-
-def view_ssp(words_in_phonemes: List[str]) -> None:
-    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
-
-    for i, phonemes in enumerate(words_in_phonemes):
-        row = i // 2
-        col = i % 2
-
-        sonority_values = [
-            calculate_sonority(phoneme, "parker") for phoneme in phonemes
-        ]
-        y = np.array(sonority_values)
-
-        phoneme_labels = [f"{idx}/{phoneme}" for idx, phoneme in enumerate(phonemes)]
-
-        axes[row, col].plot(phoneme_labels, y, marker="*", label=phonemes)
-
-    plt.tight_layout()
-    plt.show()
